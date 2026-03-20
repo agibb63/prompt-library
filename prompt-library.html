@@ -6,402 +6,332 @@
 <title>Prompt Library</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root { --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;--border:#2e2e2e;--accent:#e8c547;--accent-dim:rgba(232,197,71,0.12);--text:#e8e8e8;--text-dim:#888;--text-muted:#555;--radius:6px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;min-height:100vh;}
 
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #222222;
-    --border: #2e2e2e;
-    --accent: #e8c547;
-    --accent-dim: rgba(232,197,71,0.12);
-    --text: #e8e8e8;
-    --text-dim: #888;
-    --text-muted: #555;
-    --radius: 6px;
-  }
+  header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;}
+  .logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--accent);letter-spacing:.06em;white-space:nowrap;}
+  #search{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:8px 12px;outline:none;transition:border-color .15s;}
+  #search::placeholder{color:var(--text-muted);}
+  #search:focus{border-color:var(--accent);}
+  .sync-status{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);white-space:nowrap;}
+  .sync-status.syncing{color:var(--accent);}
+  .sync-status.error{color:#e05454;}
+  .sync-status.ok{color:#4caf78;}
+  #add-btn{background:var(--accent);border:none;border-radius:var(--radius);color:#0f0f0f;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;white-space:nowrap;transition:opacity .15s;}
+  #add-btn:hover{opacity:.85;}
+  .hdr-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-dim);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 11px;white-space:nowrap;transition:all .15s;}
+  .hdr-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .container{display:flex;height:calc(100vh - 57px);}
+  .sidebar{width:280px;min-width:200px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;}
+  @media(max-width:640px){.container{flex-direction:column;height:auto;}.sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh;}.detail{min-height:60vh;}.sync-status{display:none;}}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 15px;
-    min-height: 100vh;
-  }
+  .category-group{border-bottom:1px solid var(--border);}
+  .category-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);padding:12px 14px 6px;}
+  .prompt-item{cursor:pointer;padding:10px 14px;border-left:3px solid transparent;transition:background .1s,border-color .1s;}
+  .prompt-item:hover{background:var(--surface);}
+  .prompt-item.active{background:var(--accent-dim);border-left-color:var(--accent);}
+  .item-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;}
+  .count-label{font-size:11px;color:var(--text-muted);padding:8px 14px 4px;font-family:'IBM Plex Mono',monospace;}
 
-  header {
-    position: sticky; top: 0; z-index: 100;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-    display: flex; align-items: center; gap: 16px;
-  }
+  .detail{flex:1;overflow-y:auto;padding:28px 32px;display:flex;flex-direction:column;gap:20px;}
+  @media(max-width:640px){.detail{padding:20px 16px;}}
+  .detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;gap:8px;text-align:center;}
+  .detail-empty .icon{font-size:32px;opacity:.4;}
+  .detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .detail-title{font-size:20px;font-weight:600;color:var(--text);line-height:1.25;flex:1;}
+  .detail-category{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(232,197,71,.25);border-radius:4px;padding:3px 8px;white-space:nowrap;margin-top:3px;}
+  .detail-notes{font-size:13px;color:var(--text-dim);line-height:1.6;font-style:italic;}
+  .prompt-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .prompt-box-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .prompt-box-label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;}
+  .copy-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:5px 12px;transition:all .15s;display:flex;align-items:center;gap:6px;}
+  .copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .copy-btn.copied{border-color:#4caf78;color:#4caf78;}
+  .prompt-text{font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;color:var(--text);padding:16px;white-space:pre-wrap;word-break:break-word;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 8px;font-family:'IBM Plex Mono',monospace;}
+  .action-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .edit-btn,.delete-btn{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 14px;border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);transition:all .15s;}
+  .edit-btn{background:var(--surface);color:var(--text-dim);}
+  .edit-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .delete-btn{background:transparent;color:var(--text-muted);}
+  .delete-btn:hover{border-color:#e05454;color:#e05454;}
 
-  .logo {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px; font-weight: 500;
-    color: var(--accent); letter-spacing: 0.06em; white-space: nowrap;
-  }
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;}
+  .modal h2{font-size:16px;font-weight:600;color:var(--text);}
+  .modal p{font-size:13px;color:var(--text-dim);line-height:1.6;}
+  .modal a{color:var(--accent);}
+  .form-row{display:flex;flex-direction:column;gap:6px;}
+  .form-row label{font-size:12px;color:var(--text-dim);font-weight:500;}
+  .form-row input,.form-row textarea{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .15s;width:100%;}
+  .form-row input:focus,.form-row textarea:focus{border-color:var(--accent);}
+  .form-row textarea{font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:160px;resize:vertical;line-height:1.6;}
+  .form-row .hint{font-size:11px;color:var(--text-muted);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px;}
+  .btn-primary{background:var(--accent);border:none;border-radius:var(--radius);color:#0f0f0f;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:9px 20px;}
+  .btn-primary:hover{opacity:.85;}
+  .btn-secondary{background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-dim);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:9px 16px;}
+  .btn-secondary:hover{border-color:var(--text-dim);}
+  .divider{border:none;border-top:1px solid var(--border);margin:4px 0;}
+  .info-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);word-break:break-all;user-select:all;}
 
-  #search {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px; padding: 8px 12px; outline: none;
-    transition: border-color 0.15s;
-  }
-  #search::placeholder { color: var(--text-muted); }
-  #search:focus { border-color: var(--accent); }
-
-  #add-btn {
-    background: var(--accent); border: none;
-    border-radius: var(--radius);
-    color: #0f0f0f; cursor: pointer;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px; font-weight: 600;
-    padding: 8px 14px; white-space: nowrap;
-    transition: opacity 0.15s;
-  }
-  #add-btn:hover { opacity: 0.85; }
-
-  .container { display: flex; height: calc(100vh - 57px); }
-
-  .sidebar {
-    width: 280px; min-width: 200px;
-    border-right: 1px solid var(--border);
-    overflow-y: auto; flex-shrink: 0;
-  }
-
-  @media (max-width: 640px) {
-    .container { flex-direction: column; height: auto; }
-    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; }
-    .detail { min-height: 60vh; }
-  }
-
-  .category-group { border-bottom: 1px solid var(--border); }
-
-  .category-label {
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--text-muted); padding: 12px 14px 6px;
-  }
-
-  .prompt-item {
-    cursor: pointer; padding: 10px 14px;
-    border-left: 3px solid transparent;
-    transition: background 0.1s, border-color 0.1s;
-    display: flex; flex-direction: column; gap: 3px;
-  }
-  .prompt-item:hover { background: var(--surface); }
-  .prompt-item.active { background: var(--accent-dim); border-left-color: var(--accent); }
-
-  .item-title { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.3; }
-
-  .detail {
-    flex: 1; overflow-y: auto; padding: 28px 32px;
-    display: flex; flex-direction: column; gap: 20px;
-  }
-
-  @media (max-width: 640px) { .detail { padding: 20px 16px; } }
-
-  .detail-empty {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    color: var(--text-muted); font-size: 13px; gap: 8px; text-align: center;
-  }
-  .detail-empty .icon { font-size: 32px; opacity: 0.4; }
-
-  .detail-header {
-    display: flex; justify-content: space-between;
-    align-items: flex-start; gap: 16px; flex-wrap: wrap;
-  }
-
-  .detail-title { font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.25; flex: 1; }
-
-  .detail-category {
-    font-size: 11px; font-family: 'IBM Plex Mono', monospace;
-    color: var(--accent); background: var(--accent-dim);
-    border: 1px solid rgba(232,197,71,0.25);
-    border-radius: 4px; padding: 3px 8px; white-space: nowrap; margin-top: 3px;
-  }
-
-  .detail-notes { font-size: 13px; color: var(--text-dim); line-height: 1.6; font-style: italic; }
-
-  .prompt-box {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-  }
-
-  .prompt-box-header {
-    background: var(--surface2); border-bottom: 1px solid var(--border);
-    padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  }
-
-  .prompt-box-label {
-    font-size: 11px; font-family: 'IBM Plex Mono', monospace;
-    color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
-  }
-
-  .copy-btn {
-    background: transparent; border: 1px solid var(--border);
-    border-radius: 4px; color: var(--text-dim); cursor: pointer;
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500;
-    padding: 5px 12px; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
-  }
-  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .copy-btn.copied { border-color: #4caf78; color: #4caf78; }
-
-  .prompt-text {
-    font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.7;
-    color: var(--text); padding: 16px; white-space: pre-wrap; word-break: break-word;
-  }
-
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag {
-    font-size: 11px; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--text-dim); padding: 3px 8px; font-family: 'IBM Plex Mono', monospace;
-  }
-
-  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
-
-  .edit-btn, .delete-btn {
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500;
-    padding: 7px 14px; border-radius: var(--radius); cursor: pointer;
-    border: 1px solid var(--border); transition: all 0.15s;
-  }
-  .edit-btn { background: var(--surface); color: var(--text-dim); }
-  .edit-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .delete-btn { background: transparent; color: var(--text-muted); }
-  .delete-btn:hover { border-color: #e05454; color: #e05454; }
-
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7); z-index: 200;
-    align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; width: 100%; max-width: 560px;
-    max-height: 90vh; overflow-y: auto; padding: 24px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-
-  .modal h2 { font-size: 16px; font-weight: 600; color: var(--text); }
-
-  .form-row { display: flex; flex-direction: column; gap: 6px; }
-  .form-row label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
-
-  .form-row input, .form-row select, .form-row textarea {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
-    padding: 9px 12px; outline: none; transition: border-color 0.15s; width: 100%;
-  }
-  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent); }
-  .form-row textarea {
-    font-family: 'IBM Plex Mono', monospace; font-size: 13px;
-    min-height: 160px; resize: vertical; line-height: 1.6;
-  }
-
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
-
-  .btn-save {
-    background: var(--accent); border: none; border-radius: var(--radius);
-    color: #0f0f0f; cursor: pointer;
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; padding: 9px 20px;
-  }
-  .btn-save:hover { opacity: 0.85; }
-
-  .btn-cancel {
-    background: transparent; border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text-dim); cursor: pointer;
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; padding: 9px 16px;
-  }
-  .btn-cancel:hover { border-color: var(--text-dim); }
-
-  .count-label {
-    font-size: 11px; color: var(--text-muted); padding: 8px 14px 4px;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #444; }
+  #loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:500;}
+  #loading-screen .spin{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  #loading-screen p{font-size:13px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  ::-webkit-scrollbar-thumb:hover{background:#444;}
 </style>
 </head>
 <body>
 
+<div id="loading-screen"><div class="spin"></div><p id="loading-msg">Loading…</p></div>
+
 <header>
   <div class="logo">⚡ PROMPTS</div>
   <input id="search" type="search" placeholder="Search prompts…" autocomplete="off">
+  <span class="sync-status" id="sync-status"></span>
+  <button class="hdr-btn" onclick="openSettings()">⚙ Settings</button>
   <button id="add-btn" onclick="openModal()">+ New</button>
 </header>
 
 <div class="container">
   <aside class="sidebar" id="sidebar"></aside>
   <main class="detail" id="detail">
-    <div class="detail-empty">
-      <div class="icon">📋</div>
-      <div>Select a prompt to view it</div>
-    </div>
+    <div class="detail-empty"><div class="icon">📋</div><div>Select a prompt to view it</div></div>
   </main>
 </div>
 
+<!-- SETUP MODAL -->
+<div class="modal-overlay" id="setup-overlay">
+  <div class="modal">
+    <h2>Connect to JSONBin</h2>
+    <p>Your prompts will be stored in the cloud via <a href="https://jsonbin.io" target="_blank">JSONBin.io</a> (free). Every device that connects to the same bin will stay in sync automatically — no manual export/import.</p>
+    <hr class="divider">
+    <p><strong style="color:var(--text)">Get your Master Key:</strong> Sign in at jsonbin.io → click your avatar (top right) → API Keys → copy the Master Key.</p>
+    <div class="form-row">
+      <label>Master Key</label>
+      <input id="setup-key" type="password" placeholder="$2a$10$…">
+      <span class="hint">Stored only in this browser. Never shared.</span>
+    </div>
+    <div id="setup-bin-row" style="display:none">
+      <div class="form-row">
+        <label>Bin ID <span style="font-weight:400;color:var(--text-muted)">(from your first device)</span></label>
+        <input id="setup-bin-id" type="text" placeholder="e.g. 64a1b2c3d4e5f6a7b8c9d0e1">
+        <span class="hint">Find this in Settings on any device already connected.</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn-primary" onclick="setupConnect()">Connect</button>
+      <button class="btn-secondary" onclick="toggleBinRow()">I have an existing Bin ID</button>
+      <span id="setup-msg" style="font-size:12px;color:#e05454"></span>
+    </div>
+  </div>
+</div>
+
+<!-- PROMPT MODAL -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOutside(event)">
   <div class="modal">
     <h2 id="modal-title">New Prompt</h2>
-    <div class="form-row">
-      <label>Title *</label>
-      <input id="f-title" type="text" placeholder="Short descriptive name">
-    </div>
+    <div class="form-row"><label>Title *</label><input id="f-title" type="text" placeholder="Short descriptive name"></div>
     <div class="form-row">
       <label>Category</label>
       <input id="f-category" type="text" placeholder="e.g. Writing, Research, Code…" list="cat-list">
       <datalist id="cat-list"></datalist>
     </div>
-    <div class="form-row">
-      <label>Prompt *</label>
-      <textarea id="f-prompt" placeholder="Paste your full prompt here…"></textarea>
-    </div>
-    <div class="form-row">
-      <label>Notes (optional)</label>
-      <input id="f-notes" type="text" placeholder="When to use this, model tips, etc.">
-    </div>
-    <div class="form-row">
-      <label>Tags (comma-separated)</label>
-      <input id="f-tags" type="text" placeholder="e.g. rewrite, tone, summarize">
-    </div>
+    <div class="form-row"><label>Prompt *</label><textarea id="f-prompt" placeholder="Paste your full prompt here…"></textarea></div>
+    <div class="form-row"><label>Notes (optional)</label><input id="f-notes" type="text" placeholder="When to use this, model tips, etc."></div>
+    <div class="form-row"><label>Tags (comma-separated)</label><input id="f-tags" type="text" placeholder="e.g. rewrite, tone, summarize"></div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="savePrompt()">Save Prompt</button>
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="savePrompt()">Save Prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-overlay" onclick="closeSettingsIfOutside(event)">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div class="form-row">
+      <label>Your Bin ID</label>
+      <div class="info-box" id="settings-bin-id">—</div>
+      <span class="hint">To connect a new device: open the app, click "I have an existing Bin ID", and enter this ID plus your Master Key.</span>
+    </div>
+    <hr class="divider">
+    <div class="form-row">
+      <label>Master Key (update if needed)</label>
+      <input id="settings-key" type="password" placeholder="$2a$10$…">
+    </div>
+    <hr class="divider">
+    <div class="modal-actions" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <button class="btn-secondary" style="color:#e05454;border-color:#e05454" onclick="disconnectDevice()">Disconnect This Device</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+        <button class="btn-primary" onclick="saveSettings()">Save</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-const SEED_PROMPTS = [
-  {
-    id: "seed-1",
-    title: "Rewrite for Clarity",
-    category: "Writing",
-    prompt: `Rewrite the following text to improve clarity and conciseness. Eliminate redundancy, fix passive voice where it weakens the sentence, and ensure each sentence carries its own weight. Preserve the original meaning exactly — do not add new information or change the tone.\n\nText to rewrite:\n[PASTE TEXT HERE]`,
-    notes: "Good for editing draft emails or reports.",
-    tags: ["rewrite","editing","clarity"],
-    created: Date.now()
-  },
-  {
-    id: "seed-2",
-    title: "Summarize Long Document",
-    category: "Research",
-    prompt: `Summarize the following document. Structure your summary as:\n1. One-sentence purpose/thesis\n2. Key findings or arguments (bullet list, max 6 items)\n3. Notable caveats or limitations\n4. Bottom line — what action or conclusion does this document support?\n\nDocument:\n[PASTE DOCUMENT HERE]`,
-    notes: "Works well for research papers, reports, articles.",
-    tags: ["summarize","research","document"],
-    created: Date.now()
-  },
-  {
-    id: "seed-3",
-    title: "Explain It to a Smart Generalist",
-    category: "Research",
-    prompt: `Explain [TOPIC] to me. Assume I'm intelligent and comfortable with complexity, but have no prior knowledge of this specific subject. Use analogies to related concepts where helpful. Avoid over-simplifying but also avoid assuming domain vocabulary without defining it first. Length: 3–5 paragraphs.`,
-    notes: "Good for quickly understanding a new domain.",
-    tags: ["explainer","learning"],
-    created: Date.now()
-  },
-  {
-    id: "seed-4",
-    title: "Pro/Con Decision Matrix",
-    category: "Planning",
-    prompt: `I need to decide between the following options: [LIST OPTIONS]\n\nContext: [BRIEF SITUATION DESCRIPTION]\nMy priorities are: [LIST 3–5 PRIORITIES]\n\nBuild a structured pro/con analysis for each option. Then give a direct recommendation with your reasoning. Don't hedge — pick the best option given my stated priorities.`,
-    notes: "Forces a concrete recommendation rather than wishy-washy analysis.",
-    tags: ["decision","analysis","planning"],
-    created: Date.now()
-  },
-  {
-    id: "seed-5",
-    title: "Code Review",
-    category: "Code",
-    prompt: `Review the following code. Focus on:\n- Bugs or logical errors\n- Security vulnerabilities\n- Performance issues\n- Readability and maintainability\n- Anything that violates best practices for this language/framework\n\nFor each issue, state: (1) what it is, (2) why it matters, (3) how to fix it. If the code is clean, say so plainly.\n\nLanguage/Framework: [SPECIFY]\nCode:\n\`\`\`\n[PASTE CODE]\n\`\`\``,
-    notes: "Adjust the focus list to match your review goals.",
-    tags: ["code","review","debugging"],
-    created: Date.now()
-  }
-];
+const API   = "https://api.jsonbin.io/v3";
+const LS_K  = "pl_master_key";
+const LS_B  = "pl_bin_id";
 
-const STORE_KEY = "prompt_library_v1";
-
-function loadPrompts() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  const data = { prompts: SEED_PROMPTS };
-  saveData(data);
-  return data;
-}
-
-function saveData(data) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-}
-
-let DATA = loadPrompts();
+let DATA = { prompts: [] };
 let activeId = null;
 let editingId = null;
 
-function getFilteredPrompts() {
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const key = localStorage.getItem(LS_K);
+  const bin = localStorage.getItem(LS_B);
+  if (!key || !bin) { hideLoading(); openSetup(); return; }
+  try {
+    setLoadMsg("Loading your prompts…");
+    DATA = await fetchBin(key, bin);
+    hideLoading(); renderSidebar();
+  } catch(e) {
+    hideLoading();
+    setSyncStatus("error","Could not load — check ⚙ Settings");
+    renderSidebar();
+  }
+}
+
+// ── JSONBIN ───────────────────────────────────────────────────────────────────
+async function fetchBin(key, bin) {
+  const r = await fetch(`${API}/b/${bin}/latest`, { headers:{"X-Master-Key":key} });
+  if (!r.ok) throw new Error(r.status);
+  const j = await r.json();
+  return (j.record && Array.isArray(j.record.prompts)) ? j.record : { prompts:[] };
+}
+
+async function updateBin(key, bin, data) {
+  const r = await fetch(`${API}/b/${bin}`, {
+    method:"PUT",
+    headers:{"Content-Type":"application/json","X-Master-Key":key},
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(r.status);
+}
+
+async function createBin(key) {
+  const r = await fetch(`${API}/b`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json","X-Master-Key":key,"X-Bin-Name":"prompt-library","X-Bin-Private":"true"},
+    body: JSON.stringify({ prompts:[] })
+  });
+  if (!r.ok) throw new Error(r.status);
+  const j = await r.json();
+  return j.metadata.id;
+}
+
+async function persist() {
+  const key = localStorage.getItem(LS_K);
+  const bin = localStorage.getItem(LS_B);
+  if (!key || !bin) return;
+  setSyncStatus("syncing","Saving…");
+  try {
+    await updateBin(key, bin, DATA);
+    setSyncStatus("ok","Saved ✓");
+    setTimeout(() => setSyncStatus("",""), 2500);
+  } catch(e) { setSyncStatus("error","Save failed"); }
+}
+
+// ── SETUP ─────────────────────────────────────────────────────────────────────
+function openSetup() { document.getElementById("setup-overlay").classList.add("open"); }
+function toggleBinRow() {
+  const r = document.getElementById("setup-bin-row");
+  r.style.display = r.style.display==="none" ? "block" : "none";
+}
+
+async function setupConnect() {
+  const key    = document.getElementById("setup-key").value.trim();
+  const binVal = document.getElementById("setup-bin-id").value.trim();
+  const msg    = document.getElementById("setup-msg");
+  if (!key) { msg.textContent="Master Key is required."; return; }
+  msg.style.color="var(--text-muted)"; msg.textContent="Connecting…";
+  try {
+    let bin = binVal;
+    if (!bin) { msg.textContent="Creating new bin…"; bin = await createBin(key); }
+    else { msg.textContent="Verifying bin…"; await fetchBin(key, bin); }
+    localStorage.setItem(LS_K, key);
+    localStorage.setItem(LS_B, bin);
+    document.getElementById("setup-overlay").classList.remove("open");
+    showLoading(); setLoadMsg("Loading your prompts…");
+    DATA = await fetchBin(key, bin);
+    hideLoading(); renderSidebar();
+  } catch(e) {
+    msg.style.color="#e05454";
+    msg.textContent="Connection failed. Double-check your Master Key and Bin ID.";
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById("settings-bin-id").textContent = localStorage.getItem(LS_B)||"Not set";
+  document.getElementById("settings-key").value = localStorage.getItem(LS_K)||"";
+  document.getElementById("settings-overlay").classList.add("open");
+}
+function closeSettings() { document.getElementById("settings-overlay").classList.remove("open"); }
+function closeSettingsIfOutside(e) { if(e.target===document.getElementById("settings-overlay")) closeSettings(); }
+function saveSettings() {
+  const k = document.getElementById("settings-key").value.trim();
+  if (k) localStorage.setItem(LS_K, k);
+  closeSettings();
+}
+function disconnectDevice() {
+  if (!confirm("Remove credentials from this device? Your bin and all prompts are preserved — you can reconnect anytime.")) return;
+  localStorage.removeItem(LS_K); localStorage.removeItem(LS_B);
+  DATA = { prompts:[] }; activeId = null;
+  renderSidebar(); renderDetail(null); openSetup();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function getFiltered() {
   const q = document.getElementById("search").value.trim().toLowerCase();
   if (!q) return DATA.prompts;
   return DATA.prompts.filter(p =>
     p.title.toLowerCase().includes(q) ||
-    (p.category || "").toLowerCase().includes(q) ||
+    (p.category||"").toLowerCase().includes(q) ||
     p.prompt.toLowerCase().includes(q) ||
-    (p.tags || []).some(t => t.toLowerCase().includes(q))
+    (p.tags||[]).some(t => t.toLowerCase().includes(q))
   );
 }
 
 function renderSidebar() {
-  const filtered = getFilteredPrompts();
-  const sidebar = document.getElementById("sidebar");
-  if (!filtered.length) {
-    sidebar.innerHTML = `<div class="count-label">No results</div>`;
-    return;
-  }
-  const groups = {};
-  filtered.forEach(p => {
-    const cat = p.category || "Uncategorized";
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(p);
+  const f = getFiltered();
+  const s = document.getElementById("sidebar");
+  if (!f.length) { s.innerHTML=`<div class="count-label">${DATA.prompts.length?"No results":"No prompts yet — click + New"}</div>`; return; }
+  const g = {};
+  f.forEach(p => { const c=p.category||"Uncategorized"; (g[c]=g[c]||[]).push(p); });
+  let h = `<div class="count-label">${f.length} prompt${f.length!==1?"s":""}</div>`;
+  Object.keys(g).sort().forEach(cat => {
+    h += `<div class="category-group"><div class="category-label">${esc(cat)}</div>`;
+    g[cat].forEach(p => { h += `<div class="prompt-item${p.id===activeId?" active":""}" onclick="selectPrompt('${p.id}')"><div class="item-title">${esc(p.title)}</div></div>`; });
+    h += `</div>`;
   });
-  let html = `<div class="count-label">${filtered.length} prompt${filtered.length !== 1 ? "s" : ""}</div>`;
-  Object.keys(groups).sort().forEach(cat => {
-    html += `<div class="category-group"><div class="category-label">${escHtml(cat)}</div>`;
-    groups[cat].forEach(p => {
-      const active = p.id === activeId ? " active" : "";
-      html += `<div class="prompt-item${active}" onclick="selectPrompt('${p.id}')"><div class="item-title">${escHtml(p.title)}</div></div>`;
-    });
-    html += `</div>`;
-  });
-  sidebar.innerHTML = html;
+  s.innerHTML = h;
 }
 
 function renderDetail(id) {
-  const p = DATA.prompts.find(x => x.id === id);
-  const detail = document.getElementById("detail");
-  if (!p) {
-    detail.innerHTML = `<div class="detail-empty"><div class="icon">📋</div><div>Select a prompt to view it</div></div>`;
-    return;
-  }
-  detail.innerHTML = `
+  const p = DATA.prompts.find(x=>x.id===id);
+  const d = document.getElementById("detail");
+  if (!p) { d.innerHTML=`<div class="detail-empty"><div class="icon">📋</div><div>Select a prompt to view it</div></div>`; return; }
+  d.innerHTML=`
     <div class="detail-header">
-      <div class="detail-title">${escHtml(p.title)}</div>
-      ${p.category ? `<div class="detail-category">${escHtml(p.category)}</div>` : ""}
+      <div class="detail-title">${esc(p.title)}</div>
+      ${p.category?`<div class="detail-category">${esc(p.category)}</div>`:""}
     </div>
-    ${p.notes ? `<div class="detail-notes">${escHtml(p.notes)}</div>` : ""}
+    ${p.notes?`<div class="detail-notes">${esc(p.notes)}</div>`:""}
     <div class="prompt-box">
       <div class="prompt-box-header">
         <span class="prompt-box-label">Prompt</span>
@@ -409,125 +339,90 @@ function renderDetail(id) {
           <span id="copy-icon">⎘</span> <span id="copy-label">Copy</span>
         </button>
       </div>
-      <div class="prompt-text">${escHtml(p.prompt)}</div>
+      <div class="prompt-text">${esc(p.prompt)}</div>
     </div>
-    ${p.tags && p.tags.length ? `<div class="tags">${p.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join("")}</div>` : ""}
+    ${p.tags&&p.tags.length?`<div class="tags">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>`:""}
     <div class="action-row">
       <button class="edit-btn" onclick="openModal('${id}')">✎ Edit</button>
       <button class="delete-btn" onclick="deletePrompt('${id}')">✕ Delete</button>
-    </div>
-  `;
+    </div>`;
 }
 
 function selectPrompt(id) {
-  activeId = id;
-  renderSidebar();
-  renderDetail(id);
-  if (window.innerWidth <= 640) {
-    document.getElementById("detail").scrollIntoView({ behavior: "smooth" });
-  }
+  activeId=id; renderSidebar(); renderDetail(id);
+  if(window.innerWidth<=640) document.getElementById("detail").scrollIntoView({behavior:"smooth"});
 }
 
+// ── COPY ──────────────────────────────────────────────────────────────────────
 function copyPrompt(id) {
-  const p = DATA.prompts.find(x => x.id === id);
-  if (!p) return;
-  const btn = document.getElementById("copy-btn");
-  const label = document.getElementById("copy-label");
-  const icon = document.getElementById("copy-icon");
-  function onSuccess() {
-    btn.classList.add("copied");
-    icon.textContent = "✓";
-    label.textContent = "Copied!";
-    setTimeout(() => { btn.classList.remove("copied"); icon.textContent = "⎘"; label.textContent = "Copy"; }, 2000);
-  }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(p.prompt).then(onSuccess).catch(() => execCopy(p.prompt, onSuccess));
-  } else {
-    execCopy(p.prompt, onSuccess);
-  }
+  const p = DATA.prompts.find(x=>x.id===id); if(!p) return;
+  const btn=document.getElementById("copy-btn"),label=document.getElementById("copy-label"),icon=document.getElementById("copy-icon");
+  function ok() { btn.classList.add("copied"); icon.textContent="✓"; label.textContent="Copied!"; setTimeout(()=>{btn.classList.remove("copied");icon.textContent="⎘";label.textContent="Copy";},2000); }
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(p.prompt).then(ok).catch(()=>execCopy(p.prompt,ok));
+  else execCopy(p.prompt,ok);
 }
-
-function execCopy(text, cb) {
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
-  document.body.appendChild(ta);
-  ta.select();
-  ta.setSelectionRange(0, 99999);
-  try { document.execCommand("copy"); cb(); } catch(e) { alert("Copy failed — select text manually."); }
+function execCopy(text,cb) {
+  const ta=document.createElement("textarea"); ta.value=text; ta.style.cssText="position:fixed;top:-9999px;left:-9999px;opacity:0";
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,99999);
+  try{document.execCommand("copy");cb();}catch(e){alert("Copy failed — select text manually.");}
   document.body.removeChild(ta);
 }
 
+// ── PROMPT MODAL ──────────────────────────────────────────────────────────────
 function openModal(id) {
-  editingId = id || null;
-  document.getElementById("modal-title").textContent = id ? "Edit Prompt" : "New Prompt";
-  if (id) {
-    const p = DATA.prompts.find(x => x.id === id);
-    document.getElementById("f-title").value = p.title;
-    document.getElementById("f-category").value = p.category || "";
-    document.getElementById("f-prompt").value = p.prompt;
-    document.getElementById("f-notes").value = p.notes || "";
-    document.getElementById("f-tags").value = (p.tags || []).join(", ");
-  } else {
-    ["f-title","f-category","f-prompt","f-notes","f-tags"].forEach(id => document.getElementById(id).value = "");
-  }
-  const cats = [...new Set(DATA.prompts.map(p => p.category).filter(Boolean))].sort();
-  document.getElementById("cat-list").innerHTML = cats.map(c => `<option value="${escHtml(c)}">`).join("");
+  editingId=id||null;
+  document.getElementById("modal-title").textContent=id?"Edit Prompt":"New Prompt";
+  if(id){const p=DATA.prompts.find(x=>x.id===id);document.getElementById("f-title").value=p.title;document.getElementById("f-category").value=p.category||"";document.getElementById("f-prompt").value=p.prompt;document.getElementById("f-notes").value=p.notes||"";document.getElementById("f-tags").value=(p.tags||[]).join(", ");}
+  else{["f-title","f-category","f-prompt","f-notes","f-tags"].forEach(i=>document.getElementById(i).value="");}
+  const cats=[...new Set(DATA.prompts.map(p=>p.category).filter(Boolean))].sort();
+  document.getElementById("cat-list").innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join("");
   document.getElementById("modal-overlay").classList.add("open");
-  setTimeout(() => document.getElementById("f-title").focus(), 50);
+  setTimeout(()=>document.getElementById("f-title").focus(),50);
 }
+function closeModal(){document.getElementById("modal-overlay").classList.remove("open");editingId=null;}
+function closeModalIfOutside(e){if(e.target===document.getElementById("modal-overlay"))closeModal();}
 
-function closeModal() {
-  document.getElementById("modal-overlay").classList.remove("open");
-  editingId = null;
-}
-
-function closeModalIfOutside(e) {
-  if (e.target === document.getElementById("modal-overlay")) closeModal();
-}
-
-function savePrompt() {
-  const title = document.getElementById("f-title").value.trim();
-  const prompt = document.getElementById("f-prompt").value.trim();
-  if (!title || !prompt) { alert("Title and Prompt are required."); return; }
-  const tags = document.getElementById("f-tags").value.split(",").map(t => t.trim()).filter(Boolean);
-  if (editingId) {
-    const idx = DATA.prompts.findIndex(p => p.id === editingId);
-    DATA.prompts[idx] = { ...DATA.prompts[idx], title, category: document.getElementById("f-category").value.trim(), prompt, notes: document.getElementById("f-notes").value.trim(), tags, updated: Date.now() };
-    activeId = editingId;
+async function savePrompt() {
+  const title=document.getElementById("f-title").value.trim();
+  const prompt=document.getElementById("f-prompt").value.trim();
+  if(!title||!prompt){alert("Title and Prompt are required.");return;}
+  const tags=document.getElementById("f-tags").value.split(",").map(t=>t.trim()).filter(Boolean);
+  const cat=document.getElementById("f-category").value.trim();
+  const notes=document.getElementById("f-notes").value.trim();
+  if(editingId){
+    const idx=DATA.prompts.findIndex(p=>p.id===editingId);
+    DATA.prompts[idx]={...DATA.prompts[idx],title,category:cat,prompt,notes,tags,updated:Date.now()};
+    activeId=editingId;
   } else {
-    const np = { id: "p-" + Date.now(), title, category: document.getElementById("f-category").value.trim(), prompt, notes: document.getElementById("f-notes").value.trim(), tags, created: Date.now() };
-    DATA.prompts.unshift(np);
-    activeId = np.id;
+    const np={id:"p-"+Date.now(),title,category:cat,prompt,notes,tags,created:Date.now()};
+    DATA.prompts.unshift(np); activeId=np.id;
   }
-  saveData(DATA);
-  closeModal();
-  renderSidebar();
-  renderDetail(activeId);
+  closeModal(); renderSidebar(); renderDetail(activeId);
+  await persist();
 }
 
-function deletePrompt(id) {
-  const p = DATA.prompts.find(x => x.id === id);
-  if (!p || !confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
-  DATA.prompts = DATA.prompts.filter(x => x.id !== id);
-  saveData(DATA);
-  activeId = null;
-  renderSidebar();
-  renderDetail(null);
+async function deletePrompt(id) {
+  const p=DATA.prompts.find(x=>x.id===id);
+  if(!p||!confirm(`Delete "${p.title}"? This cannot be undone.`))return;
+  DATA.prompts=DATA.prompts.filter(x=>x.id!==id);
+  activeId=null; renderSidebar(); renderDetail(null);
+  await persist();
 }
 
-function escHtml(str) {
-  return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function setSyncStatus(cls,msg){const e=document.getElementById("sync-status");e.className="sync-status"+(cls?" "+cls:"");e.textContent=msg;}
+function setLoadMsg(m){document.getElementById("loading-msg").textContent=m;}
+function showLoading(){document.getElementById("loading-screen").style.display="flex";}
+function hideLoading(){document.getElementById("loading-screen").style.display="none";}
 
-document.getElementById("search").addEventListener("input", renderSidebar);
-
-document.addEventListener("keydown", e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); document.getElementById("search").focus(); }
-  if (e.key === "Escape") closeModal();
+document.getElementById("search").addEventListener("input",renderSidebar);
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault();document.getElementById("search").focus();}
+  if(e.key==="Escape"){closeModal();closeSettings();}
 });
 
-renderSidebar();
+init();
 </script>
 </body>
 </html>
